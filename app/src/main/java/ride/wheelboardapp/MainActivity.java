@@ -2,32 +2,28 @@ package ride.wheelboardapp;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.TextFormat;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import proto.Protocol;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, SerialComm.ProtoHandler {
     public final int GET_SETTINGS_CODE = 10;
     public final int READ_FILE_REQUEST_CODE = 11;
     public final int WRITE_FILE_REQUEST_CODE = 12;
@@ -80,6 +76,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+
+    Handler mHandler;
+
+    static final int MSG_GOT_CONFIG = 1;
+    static final int MSG_GOT_STATS = 2;
+    static final int MSG_GENERIC = 3;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,12 +90,94 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         cfg = Protocol.Config.newBuilder();
         SettingsActivity.setDefaults(cfg);
+
+        communicator = new BluetoothWorker(this, new SerialComm.ProtoHandler() {
+            @Override
+            public void OnGeneric(Protocol.ReplyId reply) {
+                Message message = mHandler.obtainMessage(MSG_GENERIC, reply);
+                message.sendToTarget();
+            }
+
+            @Override
+            public void OnConfig(Protocol.Config cfg) {
+                Message message = mHandler.obtainMessage(MSG_GOT_CONFIG, cfg);
+                message.sendToTarget();
+            }
+
+            @Override
+            public void OnStats(Protocol.Stats stats) {
+                Message message = mHandler.obtainMessage(MSG_GOT_STATS, stats);
+                message.sendToTarget();
+            }
+        });
+
+        mHandler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message inputMessage) {
+
+                switch (inputMessage.what) {
+                    case MSG_GOT_CONFIG:
+                        OnConfig((Protocol.Config)inputMessage.obj);
+                        break;
+
+                    case MSG_GOT_STATS:
+                        OnStats((Protocol.Stats)inputMessage.obj);
+                        break;
+
+                    case MSG_GENERIC:
+                        OnGeneric((Protocol.ReplyId)inputMessage.obj);
+                        break;
+
+                    default:
+                        super.handleMessage(inputMessage);
+                }
+
+            }
+        };
     }
 
     Protocol.Config.Builder cfg;
 
+    BluetoothWorker communicator;
+
+    boolean connected = false;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (!connected)
+            communicator.connectToDevice("00:12:03:27:93:72");
+
+        connected = true;
+        //communicator.connectToDevice("98:D3:31:FB:83:85");
+    }
+
+
+    @Override
+    public void OnGeneric(Protocol.ReplyId reply) {
+        Toast.makeText(getApplicationContext(), reply.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void OnConfig(Protocol.Config deviceConfig) {
+        Toast.makeText(getApplicationContext(), "Got config", Toast.LENGTH_SHORT).show();
+        cfg.clear().mergeFrom(deviceConfig);
+    }
+
+    @Override
+    public void OnStats(Protocol.Stats stats) {
+        Toast.makeText(getApplicationContext(), "Got stats: " + stats.toString(), Toast.LENGTH_LONG).show();
+    }
+
+    void showError(String text) {
+        Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+    }
+
+
     @Override
     public void onClick(View v) {
+        try {
         switch (v.getId()) {
             case R.id.changeSettings:
                 startActivityForResult(
@@ -113,8 +198,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .putExtra(Intent.EXTRA_TITLE, "boardConfig_" + currentDateandTime)
                         .addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, WRITE_FILE_REQUEST_CODE);
+                break;
+
+            case R.id.readFromBoard:
+                    communicator.sendMsg(Protocol.RequestId.READ_CONFIG);
+                break;
+
+            case R.id.callibrateAcc:
+                communicator.sendMsg(Protocol.RequestId.CALLIBRATE_ACC);
+                break;
+
+            case R.id.saveToFlash:
+                communicator.sendMsg(Protocol.RequestId.SAVE_CONFIG);
+                break;
+
+            case R.id.getStats:
+                communicator.sendMsg(Protocol.RequestId.GET_STATS);
+                break;
+
+            case R.id.saveToBoard:
+                communicator.sendConfig(cfg.build());
+                break;
 
         }
-
+        } catch (IOException e) {
+            showError(e.toString());
+        }
     }
 }
