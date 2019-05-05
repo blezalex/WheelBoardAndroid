@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.os.Handler;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -15,7 +14,7 @@ import java.util.UUID;
 import proto.Protocol;
 
 public class BluetoothWorker {
-    BluetoothAdapter mBluetoothAdapter;
+    public BluetoothAdapter mBluetoothAdapter;
     BluetoothDevice mSerialDevice;
     BluetoothSocket btSocket;
     OutputStream outputStream;
@@ -57,7 +56,7 @@ public class BluetoothWorker {
             showError("Not connected!");
     }
 
-    void setupBluetooth() {
+    public void setupBluetooth() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             Toast.makeText(host.getApplicationContext(), "No Bluetooth!", Toast.LENGTH_LONG).show();

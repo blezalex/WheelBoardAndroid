@@ -1,6 +1,8 @@
 package ride.wheelboardapp;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -28,13 +30,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public final int READ_FILE_REQUEST_CODE = 11;
     public final int WRITE_FILE_REQUEST_CODE = 12;
 
+    public final int PICK_DEVICE_CODE = 20;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == GET_SETTINGS_CODE && resultCode == RESULT_OK) {
             byte[] config = data.getByteArrayExtra("config");
             try {
                 cfg.mergeFrom(config);
+        //        communicator.sendConfig(cfg.build());
             } catch (InvalidProtocolBufferException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
             return;
@@ -146,10 +153,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onStart() {
         super.onStart();
 
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("prefs", Context.MODE_PRIVATE);
+        String address = null;
+
+        address = sharedPref.getString("device_address", null);
+
+        if (address == null) {
+            startActivityForResult(
+                    new Intent(this, ListBluetooth.class), PICK_DEVICE_CODE);
+            return;
+        }
+
         if (!connected)
-            communicator.connectToDevice("00:12:03:27:93:72");
+            communicator.connectToDevice(address);
 
         connected = true;
+//        try {
+//            communicator.sendMsg(Protocol.RequestId.READ_CONFIG);
+//        }
+//        catch (IOException e) {
+//            showError(e.toString());
+//        }
+
         //communicator.connectToDevice("98:D3:31:FB:83:85");
     }
 
