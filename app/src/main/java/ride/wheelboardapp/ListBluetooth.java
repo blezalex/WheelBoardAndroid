@@ -43,6 +43,11 @@ public class ListBluetooth extends AppCompatActivity {
             @Override
             public void OnStats(Protocol.Stats stats) {
             }
+
+            @Override
+            public void OnDebug(byte[] data) {
+
+            }
         });
 
         communicator.setupBluetooth();

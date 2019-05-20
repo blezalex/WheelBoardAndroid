@@ -19,6 +19,7 @@ public class SerialComm {
         void OnGeneric(Protocol.ReplyId reply);
         void OnConfig(Protocol.Config cfg);
         void OnStats(Protocol.Stats stats);
+        void OnDebug(byte[] data);
     }
 
     public SerialComm(ProtoHandler handler)
@@ -27,7 +28,7 @@ public class SerialComm {
     }
 
     private void DecodeMessage(byte[] msgData) throws ProtocolException, InvalidProtocolBufferException {
-        int len = msgData[1];
+        int len = toUnsignedInt(msgData[1]);
 
         int crc = CRC.compute(msgData, 0, len - CRC_LEN);
         byte high = msgData[len - CRC_LEN + 1];
@@ -60,20 +61,23 @@ public class SerialComm {
             case Protocol.ReplyId.STATS_VALUE:
                 handler.OnStats(Protocol.Stats.parseFrom(payload));;
                 break;
+            case Protocol.ReplyId.DEBUG_BUFFER_VALUE:
+                handler.OnDebug(payload);
+                break;
         }
+
+        System.arraycopy(msgData, HEADER_LEN, msgData, 0, payloadLen);
     }
 
     long lastMsgTime = 0;
     int writePos = 0;
-    byte[] msgBuffer = new byte[256];
+    byte[] msgBuffer = new byte[1024];
 
     static final int READ_TIMEOUT_MS = 1000;
 
     public void RunReader(InputStream inputStream) throws IOException {
         int bytes_read;
-
-        byte[] rawBuffer = new byte[256];
-        while ((bytes_read = inputStream.read(rawBuffer)) != -1) {
+        while ((bytes_read = inputStream.read(msgBuffer, writePos, msgBuffer.length - writePos)) != -1) {
             try {
                 long time = System.currentTimeMillis();
                 if (time > lastMsgTime + READ_TIMEOUT_MS) {
@@ -81,19 +85,21 @@ public class SerialComm {
                 }
                 lastMsgTime = time;
 
-                if ((bytes_read + writePos) > msgBuffer.length)
+                if ((bytes_read + writePos) >= msgBuffer.length)
                     writePos = 0;
 
-                System.arraycopy(rawBuffer, 0, msgBuffer, writePos, bytes_read);
                 writePos += bytes_read;
                 if (writePos > 2) {
-                    int len = msgBuffer[1];
+                    int len = toUnsignedInt(msgBuffer[1]);
                     if (len <= writePos) {
                         DecodeMessage(msgBuffer);
+                        System.arraycopy(msgBuffer, len, msgBuffer, 0, writePos - len);
+                        writePos = 0;
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                writePos = 0;
             }
         }
     }
@@ -110,7 +116,7 @@ public class SerialComm {
     private static void sendMsg(OutputStream out, Protocol.RequestId id, byte[] data) throws IOException {
         byte[] msg = new byte[data.length + HEADER_LEN + CRC_LEN];
         msg[0] = (byte) id.getNumber();
-        msg[1] = (byte) msg.length;
+        msg[1] = (byte) msg.length; // TODO: check if conversion is correct
         System.arraycopy(data, 0, msg, HEADER_LEN, data.length);
         int crc = CRC.compute(msg, 0, msg.length - CRC_LEN);
         byte calcLow = (byte) (crc & 0xFF);
@@ -120,11 +126,16 @@ public class SerialComm {
         msg[msg.length - CRC_LEN] = calcLow;
 
         out.write(msg);
+        out.flush();
 
         StringBuilder sb = new StringBuilder();
         for (byte b : msg) {
             sb.append(String.format("%02X ", b));
         }
         System.out.println(sb.toString());
+    }
+
+    private static int toUnsignedInt(byte b) {
+        return ((int) b) & 0xff;
     }
 }

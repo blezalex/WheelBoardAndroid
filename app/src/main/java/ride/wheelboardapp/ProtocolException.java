@@ -8,4 +8,9 @@ class ProtocolException extends  Exception {
     public ProtocolException(Protocol.ReplyId replyId) {
         this.replyId = replyId;
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + this.replyId.toString();
+    }
 }

@@ -73,7 +73,7 @@ public class BluetoothWorker {
         Toast.makeText(host.getApplicationContext(), text, Toast.LENGTH_LONG).show();
     }
 
-    public void connectToDevice(String address) {
+    public void connectToDevice(String address) throws IOException {
         setupBluetooth();
         mSerialDevice = mBluetoothAdapter.getRemoteDevice(address); // TODO: congifure bt device for 115200!
         if (mSerialDevice == null) {
@@ -82,31 +82,19 @@ public class BluetoothWorker {
             Toast.makeText(host.getApplicationContext(), "Found device :)", Toast.LENGTH_LONG).show();
         }
 
-        try {
-            btSocket = mSerialDevice.createRfcommSocketToServiceRecord(SPP_UUID);
-            btSocket.connect();
-        } catch (IOException e) {
-            showError("socket create failed: " + e.getMessage() + ".");
-            return;
-        }
+        btSocket = mSerialDevice.createRfcommSocketToServiceRecord(SPP_UUID);
+        btSocket.connect();
 
-        try {
-            outputStream = btSocket.getOutputStream();
-            btRecieveThrread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (true) {
-                        try{
-                            comm.RunReader(btSocket.getInputStream());
-                        } catch (IOException e) {
-                            showError(e.toString()); // TODO: dispatch error via handler (cross thread)
-                        }
-                    }
+        outputStream = btSocket.getOutputStream();
+        btRecieveThrread = new Thread(() -> {
+            while (true) {
+                try {
+                    comm.RunReader(btSocket.getInputStream());
+                } catch (IOException e) {
+                    showError(e.toString()); // TODO: dispatch error via handler (cross thread)
                 }
-            });
-            btRecieveThrread.start();
-        } catch (IOException e) {
-            showError("failed to get stream: " + e.getMessage() + ".");
-        }
+            }
+        });
+        btRecieveThrread.start();
     }
 }

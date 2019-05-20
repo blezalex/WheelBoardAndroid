@@ -95,4 +95,11 @@
         app:layout_constraintStart_toEndOf="@+id/readFromFile"
         app:layout_constraintTop_toBottomOf="@+id/saveToFile"
         android:onClick="onClick"/>
+
+    <com.jjoe64.graphview.GraphView
+        android:id="@+id/graph"
+        android:layout_width="match_parent"
+        android:layout_height="400dip"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/getStats" />
 </android.support.constraint.ConstraintLayout>

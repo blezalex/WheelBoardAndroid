@@ -13,6 +13,9 @@ import android.widget.Toast;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.TextFormat;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -89,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static final int MSG_GOT_CONFIG = 1;
     static final int MSG_GOT_STATS = 2;
     static final int MSG_GENERIC = 3;
+    static final int MSG_GOT_DEBUG = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,6 +120,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Message message = mHandler.obtainMessage(MSG_GOT_STATS, stats);
                 message.sendToTarget();
             }
+
+            @Override
+            public void OnDebug(byte[] data) {
+                Message message = mHandler.obtainMessage(MSG_GOT_DEBUG, data);
+                message.sendToTarget();
+            }
         });
 
         mHandler = new Handler(Looper.getMainLooper()) {
@@ -131,6 +141,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         OnStats((Protocol.Stats)inputMessage.obj);
                         break;
 
+                    case MSG_GOT_DEBUG:
+                        OnDebug((byte[])inputMessage.obj);
+                        break;
+
                     case MSG_GENERIC:
                         OnGeneric((Protocol.ReplyId)inputMessage.obj);
                         break;
@@ -141,6 +155,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         };
+
+        GraphView graph = (GraphView) findViewById(R.id.graph);
+        series_ = new LineGraphSeries<>(new DataPoint[] {});
+        graph.addSeries(series_);
+        graph.getViewport().setXAxisBoundsManual(true);
+        graph.getViewport().setMinX(0);
+        graph.getViewport().setMaxX(max_point);
+
+        // activate horizontal zooming and scrolling
+        graph.getViewport().setScalable(true);
+
+        // activate horizontal scrolling
+        graph.getViewport().setScrollable(true);
+
+        // activate horizontal and vertical zooming and scrolling
+        graph.getViewport().setScalableY(true);
+
+        // activate vertical scrolling
+        graph.getViewport().setScrollableY(true);
+
+        mTimer1 = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    communicator.sendMsg(Protocol.RequestId.GET_DEBUG_BUFFER);
+                } catch (IOException e) {
+                    showError(e.toString());
+                }
+                mHandler.postDelayed(this, 500);
+            }
+        };
     }
 
     Protocol.Config.Builder cfg;
@@ -149,14 +194,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     boolean connected = false;
 
+    LineGraphSeries<DataPoint> series_;
+
     @Override
     protected void onStart() {
         super.onStart();
 
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("prefs", Context.MODE_PRIVATE);
-        String address = null;
-
-        address = sharedPref.getString("device_address", null);
+        String address = sharedPref.getString("device_address", null);
 
         if (address == null) {
             startActivityForResult(
@@ -164,18 +209,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        if (!connected)
-            communicator.connectToDevice(address);
+        if (!connected) {
+            try {
+                communicator.connectToDevice(address);
+                communicator.sendMsg(Protocol.RequestId.READ_CONFIG);
+                connected = true;
+            } catch (IOException e) {
+                showError("failed to get stream: " + e.getMessage() + ".");
+            }
+        }
 
-        connected = true;
-//        try {
-//            communicator.sendMsg(Protocol.RequestId.READ_CONFIG);
-//        }
-//        catch (IOException e) {
-//            showError(e.toString());
-//        }
-
-        //communicator.connectToDevice("98:D3:31:FB:83:85");
+        if (connected) {
+            mHandler.postDelayed(mTimer1, 500);
+        }
     }
 
 
@@ -192,7 +238,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void OnStats(Protocol.Stats stats) {
-        Toast.makeText(getApplicationContext(), "Got stats: " + stats.toString(), Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), stats.toString(), Toast.LENGTH_LONG).show();
+    }
+
+    int last_point_data_ = 0;
+
+    static final int max_point = 250;
+
+    private Runnable mTimer1;
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mHandler.removeCallbacks(mTimer1);
+    }
+
+    @Override
+    public void OnDebug(byte[] data) {
+        for (int i = 0; i < data.length - 1; i++) {
+            series_.appendData(new DataPoint(last_point_data_++ , data[i]), false, max_point, true);
+        }
+
+        series_.appendData(new DataPoint(last_point_data_++ , data[data.length - 1]), true, max_point, false);
     }
 
     void showError(String text) {

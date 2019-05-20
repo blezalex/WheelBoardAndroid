@@ -16,6 +16,7 @@ enum RequestId {
   GET_STATS = 3;
   CALLIBRATE_ACC = 4;
   SAVE_CONFIG = 5;
+  GET_DEBUG_BUFFER = 6;
 }
 
 enum ReplyId {
@@ -25,6 +26,7 @@ enum ReplyId {
   STATS = 3;
   CONFIG = 4;
   CRC_MISMATCH = 5;
+  DEBUG_BUFFER = 6;
 }
 
 message Config {
