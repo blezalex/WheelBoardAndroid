@@ -246,7 +246,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 String value = m.getField(child).toString();
                 preference.setSummary(m.getField(child).toString());
                 preference.setDialogTitle("Enter " + child.getName() + " value");
-                preference.getEditText().setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER);
+                preference.getEditText().setInputType(InputType.TYPE_NUMBER_FLAG_DECIMAL | InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
                 preference.setOnPreferenceChangeListener((p, newValue) -> {
 
                     switch (child.getJavaType()) {
