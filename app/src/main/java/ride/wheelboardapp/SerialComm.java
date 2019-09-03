@@ -93,8 +93,14 @@ public class SerialComm {
                     int len = toUnsignedInt(msgBuffer[1]);
                     if (len <= writePos) {
                         DecodeMessage(msgBuffer);
-                        System.arraycopy(msgBuffer, len, msgBuffer, 0, writePos - len);
-                        writePos = 0;
+                        int bytesToCopy = writePos - len;
+                        if (bytesToCopy > 0) {
+                            System.arraycopy(msgBuffer, len, msgBuffer, 0, bytesToCopy);
+                            writePos = bytesToCopy;
+                        }
+                        else {
+                            writePos = 0;
+                        }
                     }
                 }
             } catch (Exception e) {
