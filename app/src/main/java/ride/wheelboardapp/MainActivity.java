@@ -58,11 +58,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 writer.close();
                 out.close();
             } catch (FileNotFoundException e) {
-                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG);
+                showToast(e.toString(), Toast.LENGTH_LONG);
             } catch (IOException e) {
-                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG);
+                showToast(e.toString(), Toast.LENGTH_LONG);
             }
-            Toast.makeText(this, "Saved", Toast.LENGTH_SHORT);
+            showToast("Saved", Toast.LENGTH_SHORT);
         }
 
         if (requestCode == READ_FILE_REQUEST_CODE && resultCode == RESULT_OK) {
@@ -76,11 +76,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 reader.close();
                 in.close();
             } catch (FileNotFoundException e) {
-                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG);
+                showToast( e.toString(), Toast.LENGTH_LONG);
             } catch (IOException e) {
-                Toast.makeText(this, e.toString(), Toast.LENGTH_LONG);
+                showToast( e.toString(), Toast.LENGTH_LONG);
             }
-            Toast.makeText(this, "Loaded", Toast.LENGTH_SHORT);
+            showToast("Loaded", Toast.LENGTH_SHORT);
         }
 
         super.onActivityResult(requestCode, resultCode, data);
@@ -227,18 +227,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void OnGeneric(Protocol.ReplyId reply) {
-        Toast.makeText(getApplicationContext(), reply.toString(), Toast.LENGTH_SHORT).show();
+        showToast(reply.toString(), Toast.LENGTH_SHORT);
     }
 
     @Override
     public void OnConfig(Protocol.Config deviceConfig) {
-        Toast.makeText(getApplicationContext(), "Got config", Toast.LENGTH_SHORT).show();
+        showToast("Got config", Toast.LENGTH_SHORT);
         cfg.clear().mergeFrom(deviceConfig);
     }
 
     @Override
     public void OnStats(Protocol.Stats stats) {
-        Toast.makeText(getApplicationContext(), stats.toString(), Toast.LENGTH_LONG).show();
+        showToast(stats.toString(), Toast.LENGTH_LONG);
     }
 
     int last_point_data_ = 0;
@@ -246,6 +246,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     static final int max_point = 250;
 
     private Runnable mTimer1;
+
+    private Toast lastToast = null;
+
+    private void showToast(String text, int duration) {
+        if (lastToast != null) {
+            lastToast.cancel();
+        }
+        lastToast =
+                Toast.makeText(getApplicationContext(),text, duration);
+        lastToast.show();
+    }
 
     @Override
     protected void onStop() {
@@ -263,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     void showError(String text) {
-        Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+        showToast(text, Toast.LENGTH_SHORT);
     }
 
 
