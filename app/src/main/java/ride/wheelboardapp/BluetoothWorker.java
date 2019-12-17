@@ -59,7 +59,7 @@ public class BluetoothWorker {
     public void setupBluetooth() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
-            Toast.makeText(host.getApplicationContext(), "No Bluetooth!", Toast.LENGTH_LONG).show();
+            showError("No Bluetooth!");
             return;
         }
 
@@ -77,11 +77,9 @@ public class BluetoothWorker {
         setupBluetooth();
         mSerialDevice = mBluetoothAdapter.getRemoteDevice(address); // TODO: congifure bt device for 115200!
         if (mSerialDevice == null) {
-            Toast.makeText(host.getApplicationContext(), "No paired device", Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(host.getApplicationContext(), "Found device :)", Toast.LENGTH_LONG).show();
+            showError( "No paired device");
+            return;
         }
-
         btSocket = mSerialDevice.createRfcommSocketToServiceRecord(SPP_UUID);
         btSocket.connect();
 

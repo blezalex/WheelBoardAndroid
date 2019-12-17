@@ -135,8 +135,14 @@ message Config {
     optional float speed_input_mixin = 14 [ default = 0 ];
   }
 
+  message FloatSettings  {
+    required float p_scaler = 1 [ default = 1 ];
+    required float p_reconcile_rate = 2 [ default = 0.001 ];
+  }
+
   required Misc misc = 5;
   optional PusbackSettings  pushback = 6;
+  optional FloatSettings floating = 7;
 }
 
 message Stats {
@@ -145,11 +151,11 @@ message Stats {
   optional float motor_current = 3;
   optional float speed = 5;
   optional float distance_traveled = 6;
-  required float drive_angle = 7;
-  required float stear_angle = 8;
+  optional float drive_angle = 7;
+  optional float stear_angle = 8;
 
-  required uint32 pad_pressure1 = 9;
-  required uint32 pad_pressure2 = 10;
+  optional uint32 pad_pressure1 = 9;
+  optional uint32 pad_pressure2 = 10;
 
   optional float motor_duty = 11;
   optional float esc_temp = 12;
