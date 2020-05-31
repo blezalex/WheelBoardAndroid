@@ -56,6 +56,10 @@ public class BtService extends Service {
         communicator.sendMsg(id);
     }
 
+    public void setDebugStreamId(int id) throws IOException {
+        communicator.setDebugStreamId(id);
+    }
+
     public void sendConfig(Protocol.Config cfg) throws IOException {
         communicator.sendConfig(cfg);
     }

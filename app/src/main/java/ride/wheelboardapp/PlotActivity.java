@@ -13,6 +13,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -25,11 +27,9 @@ import java.io.IOException;
 
 import proto.Protocol;
 
-public class PlotActivity extends AppCompatActivity  {
+public class PlotActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     BtService btService;
     BroadcastReceiver receiver;
-
-    static final int MSG_GOT_DEBUG = 4;
 
     private Toast lastToast = null;
 
@@ -80,6 +80,22 @@ public class PlotActivity extends AppCompatActivity  {
     };
 
     @Override
+    public void onItemSelected(AdapterView<?> parent, View v, int position, long id) {
+        if (btService!=null) {
+            try {
+                btService.setDebugStreamId(position);
+            } catch (IOException e) {
+                showError(e.toString());
+            }
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_plot);
@@ -91,9 +107,10 @@ public class PlotActivity extends AppCompatActivity  {
 //        }
 
         Spinner dropdown = findViewById(R.id.plot_type);
-        String[] items = new String[]{"Angle", "Pid Out", "Angle*10", "Motor Current", "Battery Voltage", "Battery Current"};
+        String[] items = new String[]{"[DISABLED]", "Angle", "Pid Out", "Angle*10", "Motor Current", "Battery Voltage", "Battery Current"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items);
         dropdown.setAdapter(adapter);
+        dropdown.setOnItemSelectedListener(this);
 
         GraphView graph = (GraphView) findViewById(R.id.graph);
         series_ = new LineGraphSeries<>(new DataPoint[] {});

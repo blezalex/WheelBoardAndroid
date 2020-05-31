@@ -46,8 +46,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //        communicator.sendConfig(cfg.build());
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
             return;
         }

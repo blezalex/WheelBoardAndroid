@@ -119,6 +119,12 @@ public class SerialComm {
         sendMsg(out, Protocol.RequestId.WRITE_CONFIG, data);
     }
 
+    public static void setDebugStreamId(OutputStream out, int id) throws IOException {
+        byte[] data = new byte[1];
+        data[0] = (byte) id;
+        sendMsg(out, Protocol.RequestId.SET_DEBUG_STREAM_ID, data);
+    }
+
     private static void sendMsg(OutputStream out, Protocol.RequestId id, byte[] data) throws IOException {
         byte[] msg = new byte[data.length + HEADER_LEN + CRC_LEN];
         msg[0] = (byte) id.getNumber();

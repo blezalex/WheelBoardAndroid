@@ -56,6 +56,15 @@ public class BluetoothWorker {
             showError("Not connected!");
     }
 
+    public void setDebugStreamId(int id) throws IOException {
+        if (outputStream != null) {
+            SerialComm.setDebugStreamId(outputStream, id);
+        }
+        else
+            showError("Not connected!");
+    }
+
+
     public void setupBluetooth(Activity activity) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
