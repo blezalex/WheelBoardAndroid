@@ -23,10 +23,10 @@ public class BluetoothWorker {
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     private Thread btRecieveThrread;
-    private Activity host;
+    private BtService host;
     SerialComm comm;
 
-    public BluetoothWorker(Activity host, SerialComm.ProtoHandler protoHandler) {
+    public BluetoothWorker(BtService host, SerialComm.ProtoHandler protoHandler) {
         this.host = host;
         comm = new SerialComm(protoHandler);
     }
@@ -56,7 +56,7 @@ public class BluetoothWorker {
             showError("Not connected!");
     }
 
-    public void setupBluetooth() {
+    public void setupBluetooth(Activity activity) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter == null) {
             showError("No Bluetooth!");
@@ -64,8 +64,14 @@ public class BluetoothWorker {
         }
 
         if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            host.startActivityForResult(enableBtIntent, 1);
+            if (activity != null) {
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                activity.startActivityForResult(enableBtIntent, 1);
+                mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            }
+            else {
+                showError("Bluetooth disabled. Please enable bluetooth.");
+            }
         }
     }
 
@@ -74,7 +80,7 @@ public class BluetoothWorker {
     }
 
     public void connectToDevice(String address) throws IOException {
-        setupBluetooth();
+        setupBluetooth(null);
         mSerialDevice = mBluetoothAdapter.getRemoteDevice(address); // TODO: congifure bt device for 115200!
         if (mSerialDevice == null) {
             showError( "No paired device");
