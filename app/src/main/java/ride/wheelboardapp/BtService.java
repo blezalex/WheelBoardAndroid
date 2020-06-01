@@ -70,7 +70,7 @@ public class BtService extends Service {
             public void OnGeneric(Protocol.ReplyId reply) {
                 Intent localIntent =
                         new Intent(Constants.MSG_GENERIC)
-                                .putExtra(Constants.DATA, reply);
+                                .putExtra(Constants.DATA, reply.getNumber());
                 LocalBroadcastManager.getInstance(BtService.this).sendBroadcast(localIntent);
             }
 

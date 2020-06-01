@@ -7,6 +7,17 @@
     android:layout_height="match_parent"
     tools:context="ride.wheelboardapp.MainActivity">
 
+    <TextView
+        android:id="@+id/tvDist"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Distance traveled: 0"
+        android:textSize="30sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvBatteryV" />
+
     <Button
         android:id="@+id/saveToFlash"
         android:layout_width="100dp"
@@ -92,10 +103,10 @@
         android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="20dp"
         android:text="Getting data.. "
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/plot" />
+        app:layout_constraintTop_toBottomOf="@+id/tvDist" />
 
     <android.support.constraint.Guideline
         android:id="@+id/guideline"
@@ -117,5 +128,27 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_begin="20dp" />
+
+    <TextView
+        android:id="@+id/tvSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="28dp"
+        android:text="Speed: 0"
+        android:textSize="30sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/plot" />
+
+    <TextView
+        android:id="@+id/tvBatteryV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="Battery: 0v"
+        android:textSize="30sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvSpeed" />
 
 </android.support.constraint.ConstraintLayout>

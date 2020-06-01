@@ -92,7 +92,6 @@ public class PlotActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
-
     }
 
     @Override

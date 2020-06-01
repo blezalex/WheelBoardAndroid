@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -233,6 +235,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void OnStats(Protocol.Stats stats) {
         TextView statsControl = findViewById(R.id.stats);
         statsControl.setText(stats.toString());
+
+        NumberFormat formatter = new DecimalFormat();
+        formatter.setMaximumFractionDigits(2);
+
+        TextView battV = findViewById(R.id.tvBatteryV);
+        battV.setText("Battery: " +
+                formatter.format(stats.getBattVoltage()) + "V");
+
+        TextView speed = findViewById(R.id.tvSpeed);
+        speed.setText("Speed: " +
+                formatter.format(stats.getSpeed() * cfg.getMisc().getErpmToDistConst() * 60));
+
+        TextView distance = findViewById(R.id.tvDist);
+        distance.setText("Distance traveled: " +
+                formatter.format(stats.getDistanceTraveled() * cfg.getMisc().getErpmToDistConst()));
+
     }
 
     private Runnable mTimer1;
