@@ -18,6 +18,7 @@ enum RequestId {
   SAVE_CONFIG = 5;
   GET_DEBUG_BUFFER = 6;
   SET_DEBUG_STREAM_ID = 7;
+  TOGGLE_PASSTHROUGH = 8;
 }
 
 enum ReplyId {
@@ -77,18 +78,11 @@ message Config {
     optional int32 shutoff_angle_drive = 5 [ default = 14 ];
 
     required int32 max_update_limiter = 6 [ default = 300 ];
-    optional float output_lpf_hz = 7 [ default = 100 ];
+    optional float output_lpf_hz = 7 [ default = 80 ];
 
     // Max rotation rate for D param is limited to 100 deg/sec by default
     optional int32 balance_d_param_limiter = 8 [ default = 100 ];
 
-    // 100hz = 0.385
-    // 50hz = 0.24
-    // 40hz = 0.20
-    // 30hz = 0.158
-    // 20hz = 0.11
-    // 10hz = 0.06
-    // 1hz  = 0.006
     optional float balance_d_param_lpf_hz = 9 [ default = 50 ];
 
     // MPU6050_LPF_256HZ 0, MPU6050_LPF_188HZ 1, MPU6050_LPF_98HZ 2,
@@ -117,9 +111,6 @@ message Config {
   }
 
   message Misc {
-    // 0 - no log, 1 - log angle, 2 - log output
-    optional int32 log_type = 1 [ default = 0 ];
-
     // 0-1, 1 = 100% of output power = no warning at all
     required float throttle_threshold = 7 [ default = 0.75 ];
     required float throttle_rc = 6 [ default = 0.05 ];
@@ -144,7 +135,7 @@ message Config {
   }
 
   required Misc misc = 5;
-  optional PusbackSettings  pushback = 6;
+  optional PusbackSettings pushback = 6;
 }
 
 message Stats {

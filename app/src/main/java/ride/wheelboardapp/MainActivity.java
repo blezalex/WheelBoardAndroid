@@ -39,6 +39,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public final int PICK_DEVICE_CODE = 20;
 
+    private boolean have_config = false;
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == GET_SETTINGS_CODE && resultCode == RESULT_OK) {
@@ -144,11 +146,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         timerHandler = new Handler();
         mTimer1 = new Runnable() {
+            int val = 0;
+
             @Override
             public void run() {
                 try {
-                    if (btService != null)
-                        btService.sendMsg(Protocol.RequestId.GET_STATS);
+                    if (btService != null) {
+                        if (!have_config) {
+                            if (val++ % 2 > 0)
+                               btService.sendMsg(Protocol.RequestId.READ_CONFIG);
+                        }
+                        else {
+                            btService.sendMsg(Protocol.RequestId.GET_STATS);
+                        }
+                    }
                 } catch (IOException e) {
                     showError(e.toString());
                 }
@@ -229,6 +240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void OnConfig(Protocol.Config deviceConfig) {
         showToast("Got config", Toast.LENGTH_SHORT);
+        have_config = true;
         cfg.clear().mergeFrom(deviceConfig);
     }
 
@@ -244,12 +256,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 formatter.format(stats.getBattVoltage()) + "V");
 
         TextView speed = findViewById(R.id.tvSpeed);
-        speed.setText("Speed: " +
-                formatter.format(stats.getSpeed() * cfg.getMisc().getErpmToDistConst() * 60));
+
+        float speed_m_sec = Math.abs(stats.getSpeed()) * cfg.getMisc().getErpmToDistConst() / 60;
+        speed.setText("Speed: " + formatter.format( speed_m_sec * 3.6) + " km/h");
 
         TextView distance = findViewById(R.id.tvDist);
         distance.setText("Distance traveled: " +
-                formatter.format(stats.getDistanceTraveled() * cfg.getMisc().getErpmToDistConst()));
+                formatter.format(stats.getDistanceTraveled() * cfg.getMisc().getErpmToDistConst() /  3 / 2 / 1000) + " km");
 
     }
 
@@ -324,6 +337,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     btService.sendConfig(cfg.build());
                     break;
 
+                case R.id.passthough:
+                    btService.sendMsg(Protocol.RequestId.TOGGLE_PASSTHROUGH);
+                    break;
             }
         } catch (IOException e) {
             showError(e.toString());

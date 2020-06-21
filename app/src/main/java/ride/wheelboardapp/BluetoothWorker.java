@@ -42,26 +42,31 @@ public class BluetoothWorker {
         }
     }
 
-    public void sendMsg(Protocol.RequestId id) throws IOException {
-        if (outputStream != null)
-            SerialComm.sendMsg(outputStream, id);
-        else
-            showError("Not connected!");
-    }
+    public boolean sendMsg(Protocol.RequestId id) throws IOException {
+        if (outputStream == null) {
+            return false;
 
-    public void sendConfig(Protocol.Config cfg) throws IOException {
-        if (outputStream != null)
-            SerialComm.sendConfig(outputStream, cfg);
-        else
-            showError("Not connected!");
-    }
-
-    public void setDebugStreamId(int id) throws IOException {
-        if (outputStream != null) {
-            SerialComm.setDebugStreamId(outputStream, id);
         }
-        else
-            showError("Not connected!");
+        SerialComm.sendMsg(outputStream, id);
+        return true;
+    }
+
+    public boolean sendConfig(Protocol.Config cfg) throws IOException {
+        if (outputStream == null) {
+            return false;
+        }
+
+        SerialComm.sendConfig(outputStream, cfg);
+        return true;
+    }
+
+    public boolean setDebugStreamId(int id) throws IOException {
+        if (outputStream == null) {
+            return false;
+        }
+
+        SerialComm.setDebugStreamId(outputStream, id);
+        return true;
     }
 
 

@@ -151,4 +151,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvSpeed" />
 
+    <Button
+        android:id="@+id/passthough"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Toggle Passthrough"
+        android:onClick="onClick"
+        app:layout_constraintStart_toEndOf="@+id/plot"
+        app:layout_constraintTop_toBottomOf="@+id/saveToFile" />
+
 </android.support.constraint.ConstraintLayout>
