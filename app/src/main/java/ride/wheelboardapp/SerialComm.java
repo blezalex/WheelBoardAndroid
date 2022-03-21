@@ -1,7 +1,5 @@
 package ride.wheelboardapp;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,6 +12,8 @@ public class SerialComm {
 
     static final int HEADER_LEN = 4;
     static final int CRC_LEN = 2;
+
+    static final int MAX_MSG_LEN = 512;
 
     public interface ProtoHandler {
         void OnGeneric(Protocol.ReplyId reply);
@@ -29,8 +29,15 @@ public class SerialComm {
         this.handler = handler;
     }
 
-    private void DecodeMessage(byte[] msgData) throws ProtocolException, InvalidProtocolBufferException {
-        int len = toUnsignedInt(msgData[1]);
+    private int GetMsgLength(byte[] msgData) {
+        return toUnsignedInt(msgData[1]) | (toUnsignedInt(msgData[2]) << 8);
+    }
+
+    private void DecodeMessage(byte[] msgData) throws Exception {
+        int len = GetMsgLength(msgData);
+        if (len < HEADER_LEN + CRC_LEN || len > MAX_MSG_LEN) {
+            throw new Exception("Bad length");
+        }
 
         int crc = CRC.compute(msgData, 0, len - CRC_LEN);
         byte high = msgData[len - CRC_LEN + 1];
@@ -62,7 +69,6 @@ public class SerialComm {
                 break;
             case Protocol.ReplyId.STATS_VALUE:
                 handler.OnStats(Protocol.Stats.parseFrom(payload));
-                ;
                 break;
             case Protocol.ReplyId.DEBUG_BUFFER_VALUE:
                 handler.OnDebug(payload);
@@ -74,7 +80,7 @@ public class SerialComm {
 
     long lastMsgTime = 0;
     int writePos = 0;
-    byte[] msgBuffer = new byte[1024];
+    byte[] msgBuffer = new byte[1024*4];
 
     static final int READ_TIMEOUT_MS = 1000;
 
@@ -92,28 +98,34 @@ public class SerialComm {
                 writePos = 0;
 
             writePos += bytes_read;
-            while (writePos > 0) {
-                try {
-                    if (writePos > 2) {
-                        int len = toUnsignedInt(msgBuffer[1]);
-                        if (len <= writePos) {
-                            DecodeMessage(msgBuffer);
-                            int bytesToCopy = writePos - len;
-                            if (bytesToCopy > 0) {
-                                System.arraycopy(msgBuffer, len, msgBuffer, 0, bytesToCopy);
-                                writePos = bytesToCopy;
-                            } else {
-                                writePos = 0;
-                            }
-                        }
-                    }
+            while (true) {
+                // Attempt to decode accumulated so far messages.
+                if (writePos < 2) {
+                    // the length is at pos 1 so at least 2 bytes required.
                     break;
+                }
+                int len = GetMsgLength(msgBuffer);
+                if (len > writePos && len < MAX_MSG_LEN) {
+                    // Only a part of the message is received so far, wait for more.
+
+                    // TODO: Attempt to decode message at different offset in case length is too long?
+                    break;
+                }
+
+                try {
+                    DecodeMessage(msgBuffer);
+                    // Successfully decoded one message, copy the leftover
+                    int leftoverBytes = writePos - len;
+                    if (leftoverBytes > 0) {
+                        System.arraycopy(msgBuffer, len, msgBuffer, 0, leftoverBytes);
+                    }
+                    writePos = leftoverBytes;
                 } catch (Exception e) {
+                    // Failed to decode the message. Shift 1 byte and try again.
                     e.printStackTrace();
                     System.arraycopy(msgBuffer, 1, msgBuffer, 0, writePos - 1);
                     writePos--;
                 }
-
             }
         }
     }
@@ -134,9 +146,14 @@ public class SerialComm {
     }
 
     private static void sendMsg(OutputStream out, Protocol.RequestId id, byte[] data) throws IOException {
+        if (data.length > MAX_MSG_LEN - HEADER_LEN + CRC_LEN) {
+            throw new IOException("Message is too long! Max len is: " + (MAX_MSG_LEN - HEADER_LEN + CRC_LEN) + "actual: " + data.length);
+        }
+
         byte[] msg = new byte[data.length + HEADER_LEN + CRC_LEN];
         msg[0] = (byte) id.getNumber();
-        msg[1] = (byte) msg.length; // TODO: check if conversion is correct
+        msg[1] = (byte) msg.length;
+        msg[2] = (byte) (msg.length >> 8);
         System.arraycopy(data, 0, msg, HEADER_LEN, data.length);
         int crc = CRC.compute(msg, 0, msg.length - CRC_LEN);
         byte calcLow = (byte) (crc & 0xFF);

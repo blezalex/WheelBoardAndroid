@@ -46,6 +46,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (requestCode == GET_SETTINGS_CODE && resultCode == RESULT_OK) {
             byte[] config = data.getByteArrayExtra("config");
             try {
+                showToast(Integer.toString(config.length), Toast.LENGTH_SHORT);
+                cfg.clear();
                 cfg.mergeFrom(config);
                 //        communicator.sendConfig(cfg.build());
             } catch (InvalidProtocolBufferException e) {
@@ -107,7 +109,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 try {
                     switch (intent.getAction()) {
                         case BtService.Constants.MSG_CONFIG:
-                            OnConfig(Protocol.Config.parseFrom(intent.getByteArrayExtra(BtService.Constants.DATA)));
+                            byte[] config = intent.getByteArrayExtra(BtService.Constants.DATA);
+                            OnConfig(Protocol.Config.parseFrom(config));
                             return;
 
                         case BtService.Constants.MSG_STATS:

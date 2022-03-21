@@ -106,7 +106,7 @@ public class PlotActivity extends AppCompatActivity implements AdapterView.OnIte
 //        }
 
         Spinner dropdown = findViewById(R.id.plot_type);
-        String[] items = new String[]{"[DISABLED]", "Angle", "Pid Out", "Angle*10", "Motor Current", "Battery Voltage", "Battery Current"};
+        String[] items = new String[]{"[DISABLED]", "Angle", "Pid Out", "Angle*10", "Motor Current", "Battery Voltage", "Battery Current", "ERPM/100"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items);
         dropdown.setAdapter(adapter);
         dropdown.setOnItemSelectedListener(this);
